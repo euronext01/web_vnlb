@@ -63,6 +63,27 @@ only use ' ORDER BY 1-- and modiffy the number to get error
 when you get erro in ' ORDER BY 4-- , so the number of the columns is 3
 now u modiffy the number whit null ' UNION SELECT NULL,NULL,NULL-- ween page get whtout error the number is true
 
+*Using a SQL injection UNION attack to retrieve interesting data
+When you have determined the number of columns returned by the original query and found which columns can hold string data, you are in a position to retrieve interesting data.
+Suppose that:
+The original query returns two columns, both of which can hold string data.
+The injection point is a quoted string within the WHERE clause.
+The database contains a table called users with the columns username and password.
+In this example, you can retrieve the contents of the users table by submitting the input:
+' UNION SELECT username, password FROM users--
+
+*Retrieving multiple values within a single column
+In some cases the query in the previous example may only return a single column.
+You can retrieve multiple values together within this single column by concatenating the values together. You can include a separator to let you distinguish the combined values. For example, on Oracle you could submit the input:
+' UNION SELECT username || '~' || password FROM users--
+'+UNION+SELECT+NULL,username||'~'||password+FROM+users--
+This uses the double-pipe sequence || which is a string concatenation operator on Oracle. The injected query concatenates together the values of the username and password fields, separated by the ~ character.
+
+*Examining the database in SQL injection attacks
+To exploit SQL injection vulnerabilities, it's often necessary to find information about the database. This includes:
+The type and version of the database software.
+The tables and columns that the database contains.
+
 
 
 
